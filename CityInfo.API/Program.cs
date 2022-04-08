@@ -18,8 +18,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+
 app.UseAuthorization();
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
+
+// app.UseRouting() and app.UseEndpoints(endpoints => ...) can be omitted by only adding app.MapControllers()
+//app.MapControllers();
 
 app.Run();
