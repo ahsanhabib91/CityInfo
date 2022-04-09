@@ -1,0 +1,14 @@
+Source Code by Kevin Dockx: https://github.com/KevinDockx/AspNetCore6WebAPIFundamentals
+
+https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-6.0
+
+https://docs.microsoft.com/en-us/aspnet/core/web-api/advanced/formatting?view=aspnetcore-6.0
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+
+
+
+
+
+
