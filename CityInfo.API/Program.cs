@@ -7,9 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(options =>
 {
     options.ReturnHttpNotAcceptable = true; // Configured to Send 406 code If HttpResponse type not supported
-}).AddXmlDataContractSerializerFormatters(); // Added support for xml content
-
-
+})
+.AddNewtonsoftJson() // replaces default input and output formatters with Json.NET
+.AddXmlDataContractSerializerFormatters(); // Added support for xml content
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<FileExtensionContentTypeProvider>(); // Service to get File extension

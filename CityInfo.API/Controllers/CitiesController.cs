@@ -15,7 +15,7 @@ public class CitiesController: ControllerBase
     }
 
     [HttpGet("{id}")]
-    public ActionResult<CityDto> GetCity(int id)
+    public ActionResult<CityDto> GetCity(int id) // [FromRoute]
     {
         var cityToReturn = CitiesDataStore.Current.Cities
             .FirstOrDefault(c => c.Id == id);
