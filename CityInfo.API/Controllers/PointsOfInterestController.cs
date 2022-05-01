@@ -1,4 +1,5 @@
 ﻿using CityInfo.API.Models;
+using CityInfo.API.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -9,21 +10,44 @@ namespace CityInfo.API.Controllers;
 [ApiController]
 public class PointsOfInterestController : ControllerBase
 {
+    public ILogger<PointsOfInterestController> _logger { get; }
+    public IMailService _mailService { get; }
+    public CitiesDataStore _citiesDataStore { get; }
+
+    public PointsOfInterestController(ILogger<PointsOfInterestController> logger, IMailService mailService, CitiesDataStore citiesDataStore)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _mailService = mailService ?? throw new ArgumentNullException(nameof(mailService));
+        _citiesDataStore = citiesDataStore;
+    }
+
     [HttpGet]
     public ActionResult<IEnumerable<PointOfInterestDto>> GetPointsOfInterest(int cityId)
     {
-        var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+        try
+        {
+            var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == cityId);
 
-        if (city == null)
-            return NotFound();
+            if (city == null)
+            {
+                _logger.LogInformation($"City with id {cityId} wasn't found when accessing points of interest.");
+                return NotFound();
+            }
 
-        return Ok(city.PointsOfInterest);
+            return Ok(city.PointsOfInterest);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical($"Exception while getting points of interest for city with Id {cityId}", ex);
+            return StatusCode(500, "A problem happened while your request");
+        }
+
     }
 
     [HttpGet("{pointofinterestId}", Name = nameof(GetPointOfInterest))]
     public ActionResult<PointOfInterestDto> GetPointOfInterest(int cityId, int pointofinterestId)
     {
-        var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+        var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == cityId);
 
         if (city == null)
             return NotFound();
@@ -39,13 +63,13 @@ public class PointsOfInterestController : ControllerBase
     [HttpPost]
     public ActionResult<PointOfInterestDto> CreatePointOfInterest(int cityId, PointOfInterestForCreationDto pointOfInterest)
     {
-        var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+        var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == cityId);
         if (city == null)
         {
             return NotFound();
         }
 
-        var maxPointOfInterestId = CitiesDataStore.Current.Cities.SelectMany(c => c.PointsOfInterest).Max(p => p.Id);
+        var maxPointOfInterestId = _citiesDataStore.Cities.SelectMany(c => c.PointsOfInterest).Max(p => p.Id);
 
         var finarPointOfInterest = new PointOfInterestDto()
         {
@@ -69,7 +93,7 @@ public class PointsOfInterestController : ControllerBase
     [HttpPut("{pointofinterestId}")]
     public ActionResult UpdatePointOfInterest(int cityId, int pointofinterestId, PointOfInterestForUpdateDto pointOfInterest)
     {
-        var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+        var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == cityId);
         if (city == null)
         {
             return NotFound();
@@ -91,7 +115,7 @@ public class PointsOfInterestController : ControllerBase
     public ActionResult PartiallyUpdatePointOfInterest(int cityId, int pointofinterestId, 
         JsonPatchDocument<PointOfInterestForUpdateDto> patchDocument)
     {
-        var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+        var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == cityId);
         if (city == null)
         {
             return NotFound();
@@ -131,7 +155,7 @@ public class PointsOfInterestController : ControllerBase
     [HttpDelete("{pointofinterestId}")]
     public ActionResult DeletePointOfInterest(int cityId, int pointofinterestId)
     {
-        var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+        var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == cityId);
         if (city == null)
         {
             return NotFound();
@@ -144,6 +168,10 @@ public class PointsOfInterestController : ControllerBase
         }
 
         city.PointsOfInterest.Remove(pointOfInterestFromStore);
+
+        _mailService.Send(
+            "Point of interest deleted.",
+            $"Point of interest {pointOfInterestFromStore.Name} with id {pointOfInterestFromStore.Id} was deleted.");
 
         return NoContent();
     }
