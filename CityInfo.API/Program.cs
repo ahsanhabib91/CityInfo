@@ -1,6 +1,8 @@
 using CityInfo.API;
+using CityInfo.API.DbContexts;
 using CityInfo.API.Services;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -34,12 +36,14 @@ builder.Services.AddSingleton<FileExtensionContentTypeProvider>(); // Service to
 #endif
 
 builder.Services.AddSingleton<CitiesDataStore>();
+builder.Services.AddDbContext<CityInfoContext>(dbContextOptions => dbContextOptions.UseSqlite(
+    builder.Configuration["ConnectionStrings:CityInfoDBConnectionString"]));
 
 var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment()) //to check custom environment ==> app.Environment.IsEnvironment("<MyEnvironment>");
 {
     app.UseSwagger();
     app.UseSwaggerUI();
